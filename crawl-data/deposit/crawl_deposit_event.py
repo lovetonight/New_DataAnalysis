@@ -10,8 +10,7 @@ def crawl_deposit_event_all(chain="ethereum"):
     _event_deposit = blockchain_etl["lending_events"]
     filter_criteria = {"event_type": "DEPOSIT"}
     deposit_objects = _event_deposit.find(filter_criteria)
-
-    
+    #TODO: Tra lai data 
 
 
 def crawl_deposit_event(wallet_addresses, chain="ethereum"):
@@ -21,7 +20,7 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum"):
     _event_deposit = blockchain_etl["lending_events"]
     filter_criteria = {"event_type": "DEPOSIT", "wallet": {"$in": wallet_addresses}}
     deposit_objects = _event_deposit.find(filter_criteria)
+    #TODO: Tra lai data 
     
 
 
-crawl_deposit_event_all()
