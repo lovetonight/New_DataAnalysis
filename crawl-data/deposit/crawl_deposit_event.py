@@ -11,11 +11,15 @@ def crawl_deposit_event_all(chain="ethereum"):
     filter_criteria = {"event_type": "DEPOSIT"}
     deposit_objects = _event_deposit.find(filter_criteria)
     deposit_objects = list(deposit_objects)
-    #TODO: Tra lai data 
-    
+    # TODO: Tra lai data
 
 
 def crawl_deposit_event(wallet_addresses, chain="ethereum"):
+    
+    """
+    input: list address of wallets, name of chain
+    output: dict {key: address of wallet, value: total of deposit}
+    """
     connection_url = "mongodb://etlReader:etl_reader_tsKNV6KFr2GWqqqZ@34.126.84.83:27017,34.142.204.61:27017,34.142.219.60:27017"
     connection = MongoClient(connection_url)
     blockchain_etl = connection[f"{chain}_blockchain_etl"]
@@ -23,8 +27,28 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum"):
     filter_criteria = {"event_type": "DEPOSIT", "wallet": {"$in": wallet_addresses}}
     deposit_objects = _event_deposit.find(filter_criteria)
     deposit_objects = list(deposit_objects)
-    #TODO: Tra lai data 
-    
-    # Return lại tổng deposit của các ví truyền vào
-    
 
+    token_price_dict = {}
+    for tmp in deposit_objects:
+        token_adress = tmp.get("reserve")
+        amount = tmp.get("amount")
+        if token_price_dict.get(token_adress) is None and token_adress is not None:
+            token_price_dict[token_adress] = 0.0
+
+    # Get price
+    connection_url = "mongodb://klgReaderHoan:klg_reader_hoan_123@35.198.222.97:27017,34.124.133.164:27017,34.124.205.24:27017"
+    connection = MongoClient(connection_url)
+    ethereum_blockchain_lending = connection["knowledge_graph"]
+    _smart_contracts = ethereum_blockchain_lending["smart_contracts"]
+    for key in token_price_dict.keys():
+        filter_smartcontract = {"_id": f"0x1_{key}"}
+        smart_contracts_object = _smart_contracts.find_one(filter_smartcontract)
+        token_price_dict[key] = smart_contracts_object.get("price")
+    total_deposit = defaultdict(float)
+    for tmp in deposit_objects:
+        wallet_address = tmp.get("wallet")
+        token_adress = tmp.get("reserve")
+        amount = tmp.get("amount")
+        if token_adress is not None:
+            total_deposit[wallet_address] += amount * token_price_dict[token_adress]
+    return total_deposit
