@@ -1,6 +1,5 @@
 from pymongo import MongoClient
 from collections import defaultdict
-import json
 
 
 def crawl_deposit_event_all(chain="ethereum"):
@@ -58,9 +57,9 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum", detail=True):
         if token_adress is not None:
             if detail:
                 if deposit_events[wallet_address].get(token_adress) is not None:
-                    deposit_events[wallet_address][token_adress] += amount
+                    deposit_events[wallet_address][token_adress] += amount * token_price_dict[token_adress]
                 else:
-                    deposit_events[wallet_address][token_adress] = amount
+                    deposit_events[wallet_address][token_adress] = amount * token_price_dict[token_adress]
             else:
                 total_deposit[wallet_address] += amount * token_price_dict[token_adress]
 
