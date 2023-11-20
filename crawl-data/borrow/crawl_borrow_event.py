@@ -14,13 +14,12 @@ def crawl_borrow_event_all(chain="ethereum"):
     # TODO: Tra lai data
 
 
-def crawl_borrow_event(wallet_addresses, chain="ethereum", detail=True):
+def crawl_borrow_event(wallet_addresses, chain="ethereum"):
     """
     input: list address of wallets, name of chain
     output: dict {key: address of wallet, value: total of borrow}
     """
     # output
-    total_borrow = defaultdict(float)
     borrow_events = defaultdict(dict)
 
     # Get event
@@ -48,7 +47,6 @@ def crawl_borrow_event(wallet_addresses, chain="ethereum", detail=True):
         smart_contracts_object = _smart_contracts.find_one(filter_smartcontract)
         token_price_dict[key] = smart_contracts_object.get("price")
 
-
     # Get borrow tai aave, compound
     # Processing
     for tmp in borrow_objects:
@@ -56,19 +54,15 @@ def crawl_borrow_event(wallet_addresses, chain="ethereum", detail=True):
         token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
         if token_adress is not None:
-            if detail:
-                if borrow_events[wallet_address].get(token_adress) is not None:
-                    borrow_events[wallet_address][token_adress] += amount
-                else:
-                    borrow_events[wallet_address][token_adress] = amount
+            if borrow_events[wallet_address].get(token_adress) is not None:
+                borrow_events[wallet_address][token_adress] += amount
             else:
-                total_borrow[wallet_address] += amount * token_price_dict[token_adress]
+                borrow_events[wallet_address][token_adress] = amount
 
-    if detail:
         return borrow_events
-    else:
-        return total_borrow
-def get_total_borrow(wallet_addresses,chain="ethereum"):
+
+
+def get_total_borrow(wallet_addresses, chain="ethereum"):
     total_borrow = defaultdict(float)
 
     # Get event
@@ -95,7 +89,6 @@ def get_total_borrow(wallet_addresses,chain="ethereum"):
         filter_smartcontract = {"_id": f"0x1_{key}"}
         smart_contracts_object = _smart_contracts.find_one(filter_smartcontract)
         token_price_dict[key] = smart_contracts_object.get("price")
-
 
     # Get borrow tai aave, compound
     # Processing
