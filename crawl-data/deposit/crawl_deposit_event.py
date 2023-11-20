@@ -20,7 +20,7 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum", detail=True):
     """
     # output
     total_deposit = defaultdict(float)
-    deposit_events = defaultdict(dict)
+    deposit_events = defaultdict(lambda: defaultdict(dict))
 
     # Get event
     connection_url = "mongodb://etlReader:etl_reader_tsKNV6KFr2GWqqqZ@34.126.84.83:27017,34.142.204.61:27017,34.142.219.60:27017"
@@ -54,14 +54,15 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum", detail=True):
         wallet_address = tmp.get("wallet")
         token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
+        contract_address = tmp.get("contract_address")
         if token_adress is not None:
             if detail:
-                if deposit_events[wallet_address].get(token_adress) is not None:
-                    deposit_events[wallet_address][token_adress] += amount * token_price_dict[token_adress]
+                if deposit_events[wallet_address][contract_address].get(token_adress) is not None:
+                    deposit_events[wallet_address][contract_address][token_adress] += amount * token_price_dict[token_adress]
                 else:
-                    deposit_events[wallet_address][token_adress] = amount * token_price_dict[token_adress]
+                    deposit_events[wallet_address][contract_address][token_adress] = amount * token_price_dict[token_adress]
             else:
-                total_deposit[wallet_address] += amount * token_price_dict[token_adress]
+                total_deposit[wallet_address][contract_address] += amount * token_price_dict[token_adress]
 
     if detail:
         return deposit_events
