@@ -1,6 +1,5 @@
 from pymongo import MongoClient
 from collections import defaultdict
-import json
 
 
 def crawl_borrow_event_all(chain="ethereum"):
@@ -14,13 +13,14 @@ def crawl_borrow_event_all(chain="ethereum"):
     # TODO: Tra lai data
 
 
-def crawl_borrow_event(wallet_addresses, chain="ethereum"):
+def crawl_borrow_event(wallet_addresses, chain="ethereum", detail=True):
     """
     input: list address of wallets, name of chain
     output: dict {key: address of wallet, value: total of borrow}
     """
     # output
-    borrow_events = defaultdict(dict)
+    total_borrow = defaultdict(dict)
+    borrow_events = defaultdict(lambda: defaultdict(dict))
 
     # Get event
     connection_url = "mongodb://etlReader:etl_reader_tsKNV6KFr2GWqqqZ@34.126.84.83:27017,34.142.204.61:27017,34.142.219.60:27017"
@@ -53,17 +53,43 @@ def crawl_borrow_event(wallet_addresses, chain="ethereum"):
         wallet_address = tmp.get("wallet")
         token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
+        contract_address = tmp.get("contract_address")
         if token_adress is not None:
-            if borrow_events[wallet_address].get(token_adress) is not None:
-                borrow_events[wallet_address][token_adress] += amount
+            if detail:
+                if (
+                    borrow_events[wallet_address][contract_address].get(token_adress)
+                    is not None
+                ):
+                    borrow_events[wallet_address][contract_address][token_adress] += (
+                        amount * token_price_dict[token_adress]
+                    )
+                else:
+                    borrow_events[wallet_address][contract_address][token_adress] = (
+                        amount * token_price_dict[token_adress]
+                    )
             else:
-                borrow_events[wallet_address][token_adress] = amount
-
+                if borrow_events[wallet_address].get(contract_address) is not None:
+                    total_borrow[wallet_address][contract_address] += (
+                        amount * token_price_dict[token_adress]
+                    )
+                else:
+                    total_borrow[wallet_address][contract_address] = (
+                        amount * token_price_dict[token_adress]
+                    )
+    if detail:
         return borrow_events
+    else:
+        return total_borrow
 
 
-def get_total_borrow(wallet_addresses, chain="ethereum"):
+def crawl_borrow_total(wallet_addresses, chain="ethereum"):
+    """
+    input: list address of wallets, name of chain
+    output: dict {key: address of wallet, value: total of borrow}
+    """
+    # output
     total_borrow = defaultdict(float)
+    borrow_events = defaultdict(lambda: defaultdict(dict))
 
     # Get event
     connection_url = "mongodb://etlReader:etl_reader_tsKNV6KFr2GWqqqZ@34.126.84.83:27017,34.142.204.61:27017,34.142.219.60:27017"
@@ -96,6 +122,7 @@ def get_total_borrow(wallet_addresses, chain="ethereum"):
         wallet_address = tmp.get("wallet")
         token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
+        contract_address = tmp.get("contract_address")
         if token_adress is not None:
             total_borrow[wallet_address] += amount * token_price_dict[token_adress]
-        return total_borrow
+    return total_borrow

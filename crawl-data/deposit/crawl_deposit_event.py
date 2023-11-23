@@ -62,7 +62,7 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum", detail=True):
                 else:
                     deposit_events[wallet_address][contract_address][token_adress] = amount * token_price_dict[token_adress]
             else:
-                total_deposit[wallet_address][contract_address] += amount * token_price_dict[token_adress]
+                total_deposit[wallet_address] += amount * token_price_dict[token_adress]
 
     if detail:
         return deposit_events
