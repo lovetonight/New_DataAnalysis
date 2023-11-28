@@ -1,3 +1,4 @@
+import json
 from pymongo import MongoClient
 from collections import defaultdict
 
@@ -47,9 +48,10 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum", detail=True):
     _smart_contracts = ethereum_blockchain_lending["smart_contracts"]
     for key in token_price_dict.keys():
         filter_smartcontract = {"_id": f"0x1_{key}"}
-        smart_contracts_object = _smart_contracts.find_one(filter_smartcontract)
-        if smart_contracts_object.get("price") is None:
-            print(key)
+        smart_contracts_object = None
+        smart_contracts_object = _smart_contracts.find_one(filter_smartcontract)        
+        if smart_contracts_object is None:
+            continue
         token_price_dict[key] = smart_contracts_object.get("price")
 
     # Get deposit tai aave, compound
@@ -82,4 +84,3 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum", detail=True):
         return deposit_events
     else:
         return total_deposit
-
