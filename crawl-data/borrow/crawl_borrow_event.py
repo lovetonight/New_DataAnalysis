@@ -33,9 +33,12 @@ def crawl_borrow_event(wallet_addresses, chain="ethereum", detail=True):
 
     token_price_dict = {}
     for tmp in borrow_objects:
-        token_adress = tmp.get("reserve")
+        if tmp.get("reserve") is None:
+            token_adress = tmp.get("contract_address")
+        else:
+            token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
-        if token_price_dict.get(token_adress) is None and token_adress is not None:
+        if token_price_dict.get(token_adress) is None :
             token_price_dict[token_adress] = 0.0
     # Get price
     connection_url = "mongodb://klgReaderHoan:klg_reader_hoan_123@35.198.222.97:27017,34.124.133.164:27017,34.124.205.24:27017"
@@ -51,10 +54,13 @@ def crawl_borrow_event(wallet_addresses, chain="ethereum", detail=True):
     # Processing
     for tmp in borrow_objects:
         wallet_address = tmp.get("wallet")
-        token_adress = tmp.get("reserve")
+        if tmp.get("reserve") is None:
+            token_adress = tmp.get("contract_address")
+        else:
+            token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
         contract_address = tmp.get("contract_address")
-        if token_adress is not None:
+        if token_price_dict[token_adress] is not None:
             if detail:
                 if (
                     borrow_events[wallet_address][contract_address].get(token_adress)
@@ -68,7 +74,7 @@ def crawl_borrow_event(wallet_addresses, chain="ethereum", detail=True):
                         amount * token_price_dict[token_adress]
                     )
             else:
-                if borrow_events[wallet_address].get(contract_address) is not None:
+                if total_borrow[wallet_address].get(contract_address) is not None:
                     total_borrow[wallet_address][contract_address] += (
                         amount * token_price_dict[token_adress]
                     )
@@ -102,9 +108,12 @@ def crawl_borrow_total(wallet_addresses, chain="ethereum"):
 
     token_price_dict = {}
     for tmp in borrow_objects:
-        token_adress = tmp.get("reserve")
+        if tmp.get("reserve") is None:
+            token_adress = tmp.get("contract_address")
+        else:
+            token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
-        if token_price_dict.get(token_adress) is None and token_adress is not None:
+        if token_price_dict.get(token_adress) is None:
             token_price_dict[token_adress] = 0.0
     # Get price
     connection_url = "mongodb://klgReaderHoan:klg_reader_hoan_123@35.198.222.97:27017,34.124.133.164:27017,34.124.205.24:27017"
@@ -120,9 +129,11 @@ def crawl_borrow_total(wallet_addresses, chain="ethereum"):
     # Processing
     for tmp in borrow_objects:
         wallet_address = tmp.get("wallet")
-        token_adress = tmp.get("reserve")
+        if tmp.get("reserve") is None:
+            token_adress = tmp.get("contract_address")
+        else:
+            token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
-        contract_address = tmp.get("contract_address")
-        if token_adress is not None:
+        if token_price_dict[token_adress] is not None:
             total_borrow[wallet_address] += amount * token_price_dict[token_adress]
     return total_borrow

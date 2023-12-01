@@ -1,3 +1,4 @@
+import json
 from pymongo import MongoClient
 from collections import defaultdict
 
@@ -33,7 +34,10 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum", detail=True):
 
     token_price_dict = {}
     for tmp in deposit_objects:
-        token_adress = tmp.get("reserve")
+        if tmp.get("reserve") is None:
+            token_adress = tmp.get("contract_address")
+        else:
+            token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
         if token_price_dict.get(token_adress) is None and token_adress is not None:
             token_price_dict[token_adress] = 0.0
@@ -44,23 +48,35 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum", detail=True):
     _smart_contracts = ethereum_blockchain_lending["smart_contracts"]
     for key in token_price_dict.keys():
         filter_smartcontract = {"_id": f"0x1_{key}"}
-        smart_contracts_object = _smart_contracts.find_one(filter_smartcontract)
+        smart_contracts_object = None
+        smart_contracts_object = _smart_contracts.find_one(filter_smartcontract)        
+        if smart_contracts_object is None:
+            continue
         token_price_dict[key] = smart_contracts_object.get("price")
-
 
     # Get deposit tai aave, compound
     # Processing
     for tmp in deposit_objects:
         wallet_address = tmp.get("wallet")
-        token_adress = tmp.get("reserve")
+        if tmp.get("reserve") is None:
+            token_adress = tmp.get("contract_address")
+        else:
+            token_adress = tmp.get("reserve")
         amount = tmp.get("amount")
         contract_address = tmp.get("contract_address")
-        if token_adress is not None:
+        if  token_price_dict[token_adress] is not None:
             if detail:
-                if deposit_events[wallet_address][contract_address].get(token_adress) is not None:
-                    deposit_events[wallet_address][contract_address][token_adress] += amount * token_price_dict[token_adress]
+                if (
+                    deposit_events[wallet_address][contract_address].get(token_adress)
+                    is not None
+                ):
+                    deposit_events[wallet_address][contract_address][token_adress] += (
+                        amount * token_price_dict[token_adress]
+                    )
                 else:
-                    deposit_events[wallet_address][contract_address][token_adress] = amount * token_price_dict[token_adress]
+                    deposit_events[wallet_address][contract_address][token_adress] = (
+                        amount * token_price_dict[token_adress]
+                    )
             else:
                 total_deposit[wallet_address] += amount * token_price_dict[token_adress]
 
