@@ -1,7 +1,10 @@
 from pymongo import MongoClient
 from collections import defaultdict
-
 import json
+
+myclient = MongoClient("mongodb://localhost:27017/")
+data_db = myclient["data-analysis"]
+wallet_collection = data_db["wallet"]
 
 
 def craw_liquidate_wallet(chain="ethereum"):
@@ -35,53 +38,62 @@ def get_3_liquidate(chain="ethereum"):
         "r",
     ) as f:
         wallet_liquidate = json.load(f)
-    
-    
-            
+
     # DB
     connection_url = "mongodb://klgReaderHoan:klg_reader_hoan_123@35.198.222.97:27017,34.124.133.164:27017,34.124.205.24:27017"
     connection = MongoClient(connection_url)
     blockchain_etl = connection["knowledge_graph"]
-    wallets = blockchain_etl["wallets"]   
-    
+    wallets = blockchain_etl["wallets"]
+
     # Process
     list_wallets = []
     for key, value in wallet_liquidate.items():
         if value > 3:
             list_wallets.append(f"0x1_{key}")
-            
 
     #
-    all_wallets = []  
+    all_wallets = []
     for key, value in wallet_liquidate.items():
         all_wallets.append(f"0x1_{key}")
-        
+
     # Get balance
-    
+
     filter_criteria = {"_id": {"$in": list_wallets}, "balanceInUSD": {"$lt": 1000}}
     liquidate_objects = wallets.find(filter_criteria)
     addresses = []
     for obj in liquidate_objects:
         addresses.append(obj.get("address"))
-    
-    # 
+
+    #
     exist_wallet = []
-    objects =  wallets.find({"_id": {"$in": all_wallets}})  
+    objects = wallets.find({"_id": {"$in": all_wallets}})
     for obj in objects:
         exist_wallet.append(obj.get("address"))
     # Ghi vao file
-    with open(
-        f"D:/Project/Data-Analysis/New_DataAnalysis/data/liquidate/{chain}/wallet_low_score.json",
-        "w",
-    ) as f:
-        json.dump(addresses, f, indent=4)
-        
-    filtered_wallets = list(set(exist_wallet) - set(addresses))
-    with open(
-        f"D:/Project/Data-Analysis/New_DataAnalysis/data/liquidate/{chain}/wallet_normal_score.json",
-        "w",
-    ) as f:
-        json.dump(filtered_wallets, f, indent=4)
+    wallet_objects = []
+    for address in addresses:
+        tmp = {}
+        tmp["_id"] = f'0x1_{address}'
+        tmp["type"] = "LIQUIDATE"
+        tmp["chain"] = chain
+        tmp["address"] = address
+        # wallet_objects.append(tmp)
+        wallet_collection.insert_one(tmp)
+    
+
+    # with open(
+    #     f"D:/Project/Data-Analysis/New_DataAnalysis/data/liquidate/{chain}/wallet_low_score.json",
+    #     "w",
+    # ) as f:
+    #     json.dump(addresses, f, indent=4)
+
+    # filtered_wallets = list(set(exist_wallet) - set(addresses))
+    # with open(
+    #     f"D:/Project/Data-Analysis/New_DataAnalysis/data/liquidate/{chain}/wallet_normal_score.json",
+    #     "w",
+    # ) as f:
+    #     json.dump(filtered_wallets, f, indent=4)
+
     # check wallet khong co trong klg
     """
     for key, value in wallet_liquidate.items():
