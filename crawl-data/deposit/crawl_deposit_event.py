@@ -18,6 +18,7 @@ def crawl_deposit_event(wallet_addresses, chain="ethereum", detail=True):
     """
     input: list address of wallets, name of chain
     output: dict {key: address of wallet, value: total of deposit}
+        if detail
     """
     # output
     total_deposit = defaultdict(float)
