@@ -67,7 +67,7 @@ def fn_combined_features(features):
             for _ in item:
                 tmp.append(_)
         combined.append(tmp)
-    return np.array(combined)
+    return np.array(combined, dtype=object)
 
 
 def calculate_features(sub_features):
