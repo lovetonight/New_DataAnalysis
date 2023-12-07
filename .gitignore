@@ -1,2 +1,4 @@
 New_DataAnalysis/crawl-data/liquidate/__pycache__/
 **/__pycache__/
+*.csv
+**/data/
