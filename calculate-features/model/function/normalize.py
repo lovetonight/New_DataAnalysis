@@ -24,5 +24,4 @@ def normalize_theta(theta):
         # print(calculate_features(ab))
     final_b[4][-1]= -final_b[4][-1] 
     final_a = final_a/np.array(final_a).sum()
-    
     return final_a, final_b
