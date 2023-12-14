@@ -7,6 +7,7 @@ def calculate_features(sub_features):
     return(a , b )
 
 def normalize_theta(theta):
+    theta = np.array(theta)
     ab1 = theta[0:2]
     ab2 = theta[2:6]
     ab3 = theta[6:8]
