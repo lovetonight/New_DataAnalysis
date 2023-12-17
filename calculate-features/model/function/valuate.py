@@ -1,3 +1,4 @@
+from collections import defaultdict
 import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score, accuracy_score, fbeta_score, precision_score, recall_score
@@ -29,7 +30,7 @@ X = df[
         "x72",
     ]
 ].values
-y = df["label"].values
+y_true = df["label"].values
 
 
 def labeling(scores): 
@@ -43,7 +44,7 @@ def labeling(scores):
             label.append(2)
         elif score >= 740 and score < 800:
             label.append(3)
-        elif score >= 800 and score <=850:
+        elif score >= 800:
             label.append(4)
     return label
 def about(value):
@@ -51,7 +52,7 @@ def about(value):
         return 0
     else:
         return int(value) 
-def input(matrices, theta, y):
+def predict(matrices, theta):
     # list_score = []
     # for i in range(len(matrices)):
     #     matric = matrices[i]
@@ -68,24 +69,68 @@ def input(matrices, theta, y):
     label = labeling(list_score)
     return np.array(label)
 
-
+#f1_score
 def valuate_f1_score(theta):  
-    count = input(X, theta, y)
-    return f1_score(count, y, average='micro')
+    y_pred = predict(X, theta)
+    return f1_score(y_pred, y_true, average='micro')
+
+#fbeta
 def valuate_fbeta(theta):  
-    count = input(X, theta, y)
-    return fbeta_score(count, y, beta = 2, average='micro')
+    y_pred = predict(X, theta)
+    return fbeta_score(y_pred, y_true, beta = 2, average='micro')
+
+#precision
 def valuate_precision_score(theta):  
-    count = input(X, theta, y)
-    return precision_score(count, y, average='micro')
+    y_pred = predict(X, theta)
+    return precision_score(y_pred, y_true, average='micro')
+
+#recall
 def valuate_recall_score(theta):  
-    count = input(X, theta, y)
-    return recall_score(count, y, average='micro')
+    y_pred = predict(X, theta)
+    return recall_score(y_pred, y_true, average='micro')
+
+def precision_recall(theta):  
+    y_pred = predict(X, theta)
+    return precision_recall(y_pred, y_true, average='micro'), recall_score(y_pred, y_true, average='micro')
 
 
 def calculate_accuracy_for_each_label(y_pred, y_true): 
-    accuracies = [accuracy_score(y_true == i, y_pred == i) for i in set(y_true)]
-    return accuracies
+    y_pred1 = defaultdict(int)
+    y_pred2 = defaultdict(int)
+    confuse = defaultdict(dict)
+    acurracy = []
+    for y_p, y_t in zip(y_pred, y_true):
+        y_pred2[y_t] +=1
+        if y_p == y_t:
+            y_pred1[y_t] +=1
+        else:
+            if confuse[y_t].get(y_p) is None:
+                confuse[y_t][y_p] = 1
+            else:
+                confuse[y_t][y_p] +=1
+    for i in range(0, 5):
+        acurracy.append(y_pred1[i]/y_pred2[i])
+    return np.array(acurracy), confuse
+
+def get_yp_yt(theta):
+    y_pred = predict(X, theta)
+    return y_pred, y_true
+      
 def accuracy_all(theta):
-    count = input(X, theta, y)
-    return np.array(calculate_accuracy_for_each_label(count, y))
+    y_pred = predict(X, theta)
+    acurracy, confuse = calculate_accuracy_for_each_label(y_pred, y_true)
+    return acurracy, confuse
+
+def get_max_confuse_label(theta):
+    y_pred = predict(X, theta)
+    acurracy, confuse = calculate_accuracy_for_each_label(y_pred,y_true)
+    max_values_per_key = {}
+
+    for outer_key, inner_dict in confuse.items():
+        max_inner_key = max(inner_dict, key=inner_dict.get)
+        max_values_per_key[outer_key] = {max_inner_key: inner_dict[max_inner_key]}
+    return max_values_per_key
+
+
+
+    
